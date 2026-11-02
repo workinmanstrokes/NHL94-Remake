@@ -1,0 +1,142 @@
+{
+  "teams": {
+    "SJ_SHARKS": {
+      "name": "PACIFIC TEAL SHARKS",
+      "abbr": "PTS",
+      "primary": "#008b8b",
+      "secondary": "#111622",
+      "trim": "#ffffff",
+      "players": [
+        {
+          "name": "YZERMAN",
+          "num": "19",
+          "role": "C",
+          "spd": 5,
+          "sht": 5,
+          "acc": 5,
+          "chk": 3,
+          "pas": 5
+        },
+        {
+          "name": "FEDOROV",
+          "num": "91",
+          "role": "LW",
+          "spd": 5,
+          "sht": 4,
+          "acc": 5,
+          "chk": 3,
+          "pas": 5
+        },
+        {
+          "name": "SHANAHAN",
+          "num": "14",
+          "role": "RW",
+          "spd": 3,
+          "sht": 5,
+          "acc": 4,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "LIDSTROM",
+          "num": "5",
+          "role": "LD",
+          "spd": 4,
+          "sht": 4,
+          "acc": 5,
+          "chk": 4,
+          "pas": 5
+        },
+        {
+          "name": "KONSTANT",
+          "num": "16",
+          "role": "RD",
+          "spd": 3,
+          "sht": 3,
+          "acc": 3,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "IRBE",
+          "num": "32",
+          "role": "G",
+          "spd": 5,
+          "sht": 2,
+          "acc": 5,
+          "chk": 2,
+          "pas": 4
+        }
+      ]
+    },
+    "LA_KINGS": {
+      "name": "ROYAL GOLD KINGS",
+      "abbr": "RGK",
+      "primary": "#f5b700",
+      "secondary": "#3b1c71",
+      "trim": "#ffffff",
+      "players": [
+        {
+          "name": "ROENICK",
+          "num": "27",
+          "role": "C",
+          "spd": 5,
+          "sht": 5,
+          "acc": 4,
+          "chk": 4,
+          "pas": 4
+        },
+        {
+          "name": "MOGILNY",
+          "num": "89",
+          "role": "LW",
+          "spd": 5,
+          "sht": 4,
+          "acc": 5,
+          "chk": 2,
+          "pas": 4
+        },
+        {
+          "name": "NEELY",
+          "num": "8",
+          "role": "RW",
+          "spd": 3,
+          "sht": 5,
+          "acc": 4,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "BOURQUE",
+          "num": "77",
+          "role": "LD",
+          "spd": 4,
+          "sht": 5,
+          "acc": 5,
+          "chk": 4,
+          "pas": 5
+        },
+        {
+          "name": "CHELIOS",
+          "num": "7",
+          "role": "RD",
+          "spd": 3,
+          "sht": 4,
+          "acc": 3,
+          "chk": 5,
+          "pas": 4
+        },
+        {
+          "name": "BELFOUR",
+          "num": "30",
+          "role": "G",
+          "spd": 5,
+          "sht": 2,
+          "acc": 5,
+          "chk": 3,
+          "pas": 4
+        }
+      ]
+    }
+  }
+}
