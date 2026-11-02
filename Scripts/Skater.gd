@@ -25,6 +25,8 @@ var celebrate_phase: float = 0.0
 var goalie_save_pose: int = 0
 var goalie_pose_timer: float = 0.0
 var game_mgr: Node2D = null
+var skin_color: Color = Color(0.55, 0.74, 0.50)
+var missing_limb: bool = false
 
 func setup_stats(data: Dictionary, t_id: int, p_col: Color, s_col: Color, tr_col: Color, mgr: Node2D) -> void:
 	player_name = data.get("name", "SKATER")
@@ -64,7 +66,7 @@ func _physics_process(delta: float) -> void:
 	if is_goalie:
 		_process_goalie(delta); queue_redraw(); return
 	if not is_human: _process_ai_role(delta)
-	var max_spd = (205.0 + stat_spd * 48.0) * (1.30 if turbo_active else 1.0)
+	var max_spd = (205.0 + stat_spd * 48.0) * (1.30 if turbo_active else 1.0) * (1.07 if game_mgr.period >= 3 else 1.0)
 	var accel = 520.0 + stat_spd * 75.0
 	if check_timer <= 0.0:
 		if move_input.length() > 0.1:
@@ -156,6 +158,9 @@ func _check_body_collisions() -> void:
 			if global_position.distance_to(s.global_position) < 34.0:
 				s.stunned_timer = 0.90; s.velocity = facing_dir * 540.0
 				AudioManager.play_sfx("board_crack", 1.0)
+				var pops_limb = (turbo_active or randf() < 0.30) and not s.missing_limb
+				if pops_limb: s.missing_limb = true
+				game_mgr.spawn_gore(s.global_position, facing_dir, pops_limb, s.skin_color)
 				game_mgr.trigger_hit_feedback(0.055, 11.0)
 				Input.vibrate_handheld(80)
 				if game_mgr.puck.carrier == s:
@@ -182,12 +187,14 @@ func _draw() -> void:
 	if stunned_timer > 0.0:
 		draw_rect(Rect2(-16, -4, 30, 13), primary_color, true)
 		draw_rect(Rect2(-6, -4, 10, 13), secondary_color, true)
-		draw_circle(Vector2(14, 2), 5.5, Color(0.95, 0.78, 0.64))
+		draw_circle(Vector2(14, 2), 5.5, skin_color)
 		return
 	var spd_ratio = clamp(velocity.length() / 360.0, 0.0, 1.0)
 	var stride_l = sin(anim_phase) * 6.5 * spd_ratio
 	var stride_r = -sin(anim_phase) * 6.5 * spd_ratio
 	var body_bob = abs(cos(anim_phase)) * 2.0 * spd_ratio
+	if turbo_active and is_human:
+		draw_circle(Vector2(0, -4), 21.0, Color(1.0, 0.1, 0.1, 0.16 + 0.10 * sin(anim_phase * 3.0)))
 	draw_rect(Rect2(-9 + stride_l * 0.3, 6 + stride_l, 6, 5), Color(0.12, 0.12, 0.15), true)
 	draw_rect(Rect2(3 + stride_r * 0.3, 6 + stride_r, 6, 5), Color(0.12, 0.12, 0.15), true)
 	draw_rect(Rect2(-9, 0 - body_bob, 18, 7), secondary_color, true)
@@ -195,8 +202,15 @@ func _draw() -> void:
 	draw_rect(Rect2(-10, -3 - body_bob, 20, 3), trim_color, true)
 	draw_rect(Rect2(-11, -13 - body_bob, 22, 4), secondary_color, true)
 	draw_string(font, Vector2(-10, -4 - body_bob), jersey_num, HORIZONTAL_ALIGNMENT_CENTER, 20, 9, trim_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(-10, 0 - body_bob), Vector2(10, 0 - body_bob), Vector2(8, 4 - body_bob), Vector2(5, 1 - body_bob), Vector2(2, 5 - body_bob), Vector2(-2, 1 - body_bob), Vector2(-5, 4 - body_bob), Vector2(-8, 1 - body_bob)]), primary_color)
 	draw_rect(Rect2(-6, -21 - body_bob, 12, 8), primary_color, true)
-	draw_rect(Rect2(-4 + facing_dir.x * 1.5, -18 - body_bob, 8, 5), Color(0.96, 0.80, 0.64), true)
+	draw_rect(Rect2(-4 + facing_dir.x * 1.5, -18 - body_bob, 8, 5), skin_color, true)
+	var eye_col = Color(1.0, 0.15, 0.1) if turbo_active else Color(0.98, 0.95, 0.35)
+	draw_rect(Rect2(-3 + facing_dir.x * 1.5, -17 - body_bob, 2, 2), eye_col, true)
+	draw_rect(Rect2(1 + facing_dir.x * 1.5, -17 - body_bob, 2, 2), eye_col, true)
+	draw_line(Vector2(-3 + facing_dir.x * 1.5, -14 - body_bob), Vector2(3 + facing_dir.x * 1.5, -14 - body_bob), Color(0.15, 0.2, 0.12), 1.0)
+	if missing_limb: draw_rect(Rect2(-12, -11 - body_bob, 3, 4), Color(0.62, 0.08, 0.10), true)
+	else: draw_line(Vector2(-9, -10 - body_bob), Vector2(-12 + sin(anim_phase) * 1.5, 1 - body_bob + abs(sin(anim_phase))), skin_color, 3.0)
 	if game_mgr.state == game_mgr.GameState.GOAL_CELEBRATION and team_id == game_mgr.last_scoring_team:
 		draw_line(Vector2(-8, -12), Vector2(12, -26.0 + sin(celebrate_phase) * 5.0), Color(0.86, 0.72, 0.42), 3.2)
 		return
@@ -230,6 +244,9 @@ func _draw_goalie_sprite() -> void:
 	draw_arc(Vector2(14, glove_y), 5.5, 0, TAU, 12, trim_color, 1.8)
 	draw_rect(Rect2(-6, -22, 12, 9), trim_color, true)
 	draw_rect(Rect2(-4 + out * 1.5, -20, 8, 6), Color(0.25, 0.28, 0.32), true)
+	draw_line(Vector2(-4, -22), Vector2(-1, -16), Color(0.1, 0.1, 0.12), 1.3)
+	draw_line(Vector2(-1, -16), Vector2(3, -14), Color(0.1, 0.1, 0.12), 1.3)
+	draw_rect(Rect2(1 + out * 1.5, -18, 2, 2), Color(0.4, 1.0, 0.4), true)
 	var g_stick = Vector2(out * 18.0, 10.0)
 	draw_line(Vector2(-6, -4), g_stick, Color(0.9, 0.76, 0.45), 4.2)
 	draw_line(g_stick, g_stick + Vector2(out * 9.0, 0), primary_color, 4.5)

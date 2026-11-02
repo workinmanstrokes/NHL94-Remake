@@ -1,55 +1,128 @@
 {
   "teams": {
-    "SJ_SHARKS": {
-      "name": "PACIFIC TEAL SHARKS",
-      "abbr": "PTS",
-      "primary": "#008b8b",
-      "secondary": "#111622",
-      "trim": "#ffffff",
+    "MCD": {
+      "name": "MONTREAL CADAVIENS",
+      "abbr": "MCD",
+      "primary": "#B3122E",
+      "secondary": "#2A0A10",
+      "trim": "#F2EFE6",
+      "skin": "#8fb59a",
+      "style": "Cold, patient puck movers. Passing is their weapon.",
       "players": [
         {
-          "name": "YZERMAN",
-          "num": "19",
+          "name": "BÉLIVEAULT",
+          "num": "4",
           "role": "C",
-          "spd": 5,
-          "sht": 5,
-          "acc": 5,
+          "spd": 3,
+          "sht": 4,
+          "acc": 4,
           "chk": 3,
           "pas": 5
         },
         {
-          "name": "FEDOROV",
+          "name": "CORONER",
+          "num": "12",
+          "role": "LW",
+          "spd": 5,
+          "sht": 3,
+          "acc": 4,
+          "chk": 2,
+          "pas": 4
+        },
+        {
+          "name": "LAFLESH",
+          "num": "10",
+          "role": "RW",
+          "spd": 5,
+          "sht": 5,
+          "acc": 4,
+          "chk": 2,
+          "pas": 3
+        },
+        {
+          "name": "ROTBINSON",
+          "num": "19",
+          "role": "LD",
+          "spd": 2,
+          "sht": 3,
+          "acc": 3,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "SAVAGE",
+          "num": "18",
+          "role": "RD",
+          "spd": 3,
+          "sht": 2,
+          "acc": 2,
+          "chk": 4,
+          "pas": 3
+        },
+        {
+          "name": "DREADDEN",
+          "num": "1",
+          "role": "G",
+          "spd": 5,
+          "sht": 4,
+          "acc": 3,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "DDW": {
+      "name": "DETROIT DREAD WINGS",
+      "abbr": "DDW",
+      "primary": "#C8102E",
+      "secondary": "#1C1C1C",
+      "trim": "#F2EFE6",
+      "skin": "#7fae6a",
+      "style": "Fast, hungry and relentless. Win the neutral zone, swarm the puck.",
+      "players": [
+        {
+          "name": "YZERMOAN",
+          "num": "19",
+          "role": "C",
+          "spd": 4,
+          "sht": 4,
+          "acc": 4,
+          "chk": 3,
+          "pas": 5
+        },
+        {
+          "name": "FEDOROT",
           "num": "91",
           "role": "LW",
           "spd": 5,
           "sht": 4,
-          "acc": 5,
+          "acc": 4,
           "chk": 3,
-          "pas": 5
+          "pas": 4
         },
         {
-          "name": "SHANAHAN",
-          "num": "14",
+          "name": "HOWL",
+          "num": "9",
           "role": "RW",
-          "spd": 3,
+          "spd": 4,
           "sht": 5,
           "acc": 4,
           "chk": 5,
           "pas": 3
         },
         {
-          "name": "LIDSTROM",
+          "name": "LIDSTOMB",
           "num": "5",
           "role": "LD",
-          "spd": 4,
-          "sht": 4,
-          "acc": 5,
+          "spd": 3,
+          "sht": 3,
+          "acc": 4,
           "chk": 4,
           "pas": 5
         },
         {
-          "name": "KONSTANT",
-          "num": "16",
+          "name": "CHILIOS",
+          "num": "7",
           "role": "RD",
           "spd": 3,
           "sht": 3,
@@ -58,83 +131,440 @@
           "pas": 3
         },
         {
-          "name": "IRBE",
-          "num": "32",
+          "name": "SAWCHUNK",
+          "num": "1",
           "role": "G",
           "spd": 5,
-          "sht": 2,
-          "acc": 5,
-          "chk": 2,
-          "pas": 4
+          "sht": 5,
+          "acc": 3,
+          "chk": 3,
+          "pas": 3
         }
       ]
     },
-    "LA_KINGS": {
-      "name": "ROYAL GOLD KINGS",
-      "abbr": "RGK",
-      "primary": "#f5b700",
-      "secondary": "#3b1c71",
-      "trim": "#ffffff",
+    "BRN": {
+      "name": "BOSTON BRAINS",
+      "abbr": "BRN",
+      "primary": "#E0A800",
+      "secondary": "#111111",
+      "trim": "#F2EFE6",
+      "skin": "#b5a8c9",
+      "style": "Big, bruising, and always hunting heads. Check everything.",
       "players": [
         {
-          "name": "ROENICK",
-          "num": "27",
+          "name": "ESPOOKSITO",
+          "num": "7",
           "role": "C",
-          "spd": 5,
+          "spd": 3,
           "sht": 5,
           "acc": 4,
           "chk": 4,
-          "pas": 4
+          "pas": 3
         },
         {
-          "name": "MOGILNY",
-          "num": "89",
+          "name": "BONYK",
+          "num": "9",
           "role": "LW",
-          "spd": 5,
-          "sht": 4,
-          "acc": 5,
-          "chk": 2,
-          "pas": 4
+          "spd": 3,
+          "sht": 3,
+          "acc": 3,
+          "chk": 3,
+          "pas": 3
         },
         {
-          "name": "NEELY",
+          "name": "NEELY-DEAD",
           "num": "8",
           "role": "RW",
           "spd": 3,
           "sht": 5,
           "acc": 4,
           "chk": 5,
-          "pas": 3
+          "pas": 2
         },
         {
-          "name": "BOURQUE",
-          "num": "77",
+          "name": "GORE",
+          "num": "4",
           "role": "LD",
-          "spd": 4,
-          "sht": 5,
-          "acc": 5,
-          "chk": 4,
+          "spd": 5,
+          "sht": 4,
+          "acc": 4,
+          "chk": 3,
           "pas": 5
         },
         {
-          "name": "CHELIOS",
-          "num": "7",
+          "name": "BURY",
+          "num": "77",
           "role": "RD",
           "spd": 3,
+          "sht": 3,
+          "acc": 4,
+          "chk": 4,
+          "pas": 4
+        },
+        {
+          "name": "STITCHEVERS",
+          "num": "30",
+          "role": "G",
+          "spd": 4,
           "sht": 4,
           "acc": 3,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "NYV": {
+      "name": "NEW YORK RAVAGERS",
+      "abbr": "NYV",
+      "primary": "#1F5FAF",
+      "secondary": "#0E2A52",
+      "trim": "#F5F5F5",
+      "skin": "#86b5c2",
+      "style": "Glitzy and sloppy. Sharp shooters, shaky defense.",
+      "players": [
+        {
+          "name": "MESSEAR",
+          "num": "11",
+          "role": "C",
+          "spd": 4,
+          "sht": 5,
+          "acc": 4,
           "chk": 5,
           "pas": 4
         },
         {
-          "name": "BELFOUR",
-          "num": "30",
+          "name": "GILBITE",
+          "num": "7",
+          "role": "LW",
+          "spd": 4,
+          "sht": 4,
+          "acc": 4,
+          "chk": 2,
+          "pas": 4
+        },
+        {
+          "name": "ROTELLE",
+          "num": "19",
+          "role": "RW",
+          "spd": 3,
+          "sht": 4,
+          "acc": 4,
+          "chk": 1,
+          "pas": 5
+        },
+        {
+          "name": "LEECHMAN",
+          "num": "2",
+          "role": "LD",
+          "spd": 4,
+          "sht": 3,
+          "acc": 4,
+          "chk": 3,
+          "pas": 5
+        },
+        {
+          "name": "GRAVE-DIGGER",
+          "num": "4",
+          "role": "RD",
+          "spd": 3,
+          "sht": 3,
+          "acc": 3,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "RICTUS",
+          "num": "35",
           "role": "G",
-          "spd": 5,
+          "spd": 4,
+          "sht": 4,
+          "acc": 4,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "FLR": {
+      "name": "PHILADELPHIA FLAYERS",
+      "abbr": "FLR",
+      "primary": "#F26B1D",
+      "secondary": "#111111",
+      "trim": "#F2EFE6",
+      "skin": "#9bb86a",
+      "style": "Dirty. Every check can start a brawl, and enforcers drop hammers.",
+      "players": [
+        {
+          "name": "CLAWKE",
+          "num": "16",
+          "role": "C",
+          "spd": 3,
+          "sht": 4,
+          "acc": 4,
+          "chk": 5,
+          "pas": 4
+        },
+        {
+          "name": "REACHES",
+          "num": "27",
+          "role": "LW",
+          "spd": 4,
+          "sht": 5,
+          "acc": 4,
+          "chk": 2,
+          "pas": 2
+        },
+        {
+          "name": "LINDROTTEN",
+          "num": "88",
+          "role": "RW",
+          "spd": 3,
+          "sht": 5,
+          "acc": 4,
+          "chk": 5,
+          "pas": 2
+        },
+        {
+          "name": "DEAD-JARDINS",
+          "num": "8",
+          "role": "LD",
+          "spd": 3,
           "sht": 2,
+          "acc": 3,
+          "chk": 4,
+          "pas": 4
+        },
+        {
+          "name": "SKULZ",
+          "num": "17",
+          "role": "RD",
+          "spd": 2,
+          "sht": 1,
+          "acc": 1,
+          "chk": 5,
+          "pas": 1
+        },
+        {
+          "name": "PARENTLESS",
+          "num": "1",
+          "role": "G",
+          "spd": 4,
+          "sht": 5,
+          "acc": 3,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "PNG": {
+      "name": "PITTSBURGH PEN-GHOULS",
+      "abbr": "PNG",
+      "primary": "#111111",
+      "secondary": "#111111",
+      "trim": "#E8B923",
+      "skin": "#a7b0a0",
+      "style": "Pure firepower. Stars are fast and shoot first.",
+      "players": [
+        {
+          "name": "LE-MAIM",
+          "num": "66",
+          "role": "C",
+          "spd": 3,
+          "sht": 5,
           "acc": 5,
+          "chk": 2,
+          "pas": 5
+        },
+        {
+          "name": "FRANKENCIS",
+          "num": "10",
+          "role": "LW",
+          "spd": 3,
+          "sht": 4,
+          "acc": 4,
+          "chk": 3,
+          "pas": 5
+        },
+        {
+          "name": "JAW-GR",
+          "num": "68",
+          "role": "RW",
+          "spd": 4,
+          "sht": 5,
+          "acc": 4,
           "chk": 3,
           "pas": 4
+        },
+        {
+          "name": "COFFIN",
+          "num": "77",
+          "role": "LD",
+          "spd": 5,
+          "sht": 4,
+          "acc": 4,
+          "chk": 1,
+          "pas": 4
+        },
+        {
+          "name": "MURKY",
+          "num": "3",
+          "role": "RD",
+          "spd": 3,
+          "sht": 2,
+          "acc": 2,
+          "chk": 4,
+          "pas": 3
+        },
+        {
+          "name": "BARROW-SO",
+          "num": "35",
+          "role": "G",
+          "spd": 3,
+          "sht": 3,
+          "acc": 4,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "OOZ": {
+      "name": "EDMONTON OOZERS",
+      "abbr": "OOZ",
+      "primary": "#E05A00",
+      "secondary": "#0B3C7A",
+      "trim": "#F2EFE6",
+      "skin": "#78d36a",
+      "style": "Run-and-gun slime. Fastest team, leaky goalie.",
+      "players": [
+        {
+          "name": "GRAVESKY",
+          "num": "99",
+          "role": "C",
+          "spd": 5,
+          "sht": 5,
+          "acc": 5,
+          "chk": 2,
+          "pas": 5
+        },
+        {
+          "name": "UNDERSOIL",
+          "num": "9",
+          "role": "LW",
+          "spd": 4,
+          "sht": 4,
+          "acc": 4,
+          "chk": 3,
+          "pas": 3
+        },
+        {
+          "name": "KURSED",
+          "num": "17",
+          "role": "RW",
+          "spd": 5,
+          "sht": 5,
+          "acc": 4,
+          "chk": 2,
+          "pas": 3
+        },
+        {
+          "name": "LOWROT",
+          "num": "5",
+          "role": "LD",
+          "spd": 3,
+          "sht": 2,
+          "acc": 2,
+          "chk": 4,
+          "pas": 3
+        },
+        {
+          "name": "MUDDY",
+          "num": "3",
+          "role": "RD",
+          "spd": 3,
+          "sht": 3,
+          "acc": 4,
+          "chk": 3,
+          "pas": 4
+        },
+        {
+          "name": "FRIGHT",
+          "num": "31",
+          "role": "G",
+          "spd": 5,
+          "sht": 4,
+          "acc": 2,
+          "chk": 3,
+          "pas": 3
+        }
+      ]
+    },
+    "SCB": {
+      "name": "BUFFALO SCABS",
+      "abbr": "SCB",
+      "primary": "#6A2C91",
+      "secondary": "#3A1553",
+      "trim": "#E8B923",
+      "skin": "#a78bb8",
+      "style": "Tough and scrappy. Last ones standing in the third.",
+      "players": [
+        {
+          "name": "PERROT",
+          "num": "11",
+          "role": "C",
+          "spd": 5,
+          "sht": 4,
+          "acc": 4,
+          "chk": 2,
+          "pas": 5
+        },
+        {
+          "name": "MORTIN",
+          "num": "7",
+          "role": "LW",
+          "spd": 3,
+          "sht": 5,
+          "acc": 4,
+          "chk": 3,
+          "pas": 3
+        },
+        {
+          "name": "LAFOETID",
+          "num": "16",
+          "role": "RW",
+          "spd": 4,
+          "sht": 4,
+          "acc": 4,
+          "chk": 2,
+          "pas": 5
+        },
+        {
+          "name": "HAUNTSLEY",
+          "num": "6",
+          "role": "LD",
+          "spd": 4,
+          "sht": 3,
+          "acc": 4,
+          "chk": 3,
+          "pas": 4
+        },
+        {
+          "name": "RAMSHACKLE",
+          "num": "5",
+          "role": "RD",
+          "spd": 2,
+          "sht": 2,
+          "acc": 2,
+          "chk": 5,
+          "pas": 3
+        },
+        {
+          "name": "HUSK",
+          "num": "39",
+          "role": "G",
+          "spd": 5,
+          "sht": 5,
+          "acc": 4,
+          "chk": 3,
+          "pas": 3
         }
       ]
     }

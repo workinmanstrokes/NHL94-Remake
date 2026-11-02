@@ -15,6 +15,10 @@ var y_sort_layer: Node2D; var puck: CharacterBody2D; var cam: Camera2D
 var home_skaters: Array = []; var away_skaters: Array = []
 var active_human: CharacterBody2D = null; var pass_target_mate: CharacterBody2D = null
 var auto_switch_cd: float = 0.0; var ice_sprays: Array = []; var skate_scratches: Array = []
+const HOME_TEAM_KEY: String = "OOZ"  # change to MCD, DDW, BRN, NYV, FLR, PNG or SCB to play as another team
+var home_data: Dictionary = {}; var away_data: Dictionary = {}
+var home_abbr: String = "HOM"; var away_abbr: String = "AWY"; var home_name: String = "HOME"; var away_name: String = "AWAY"
+var rage_meter: float = 1.0; var gore_bits: Array = []; var frozen_bones: Array = []
 
 var joy_center: Vector2 = Vector2(155, 715); var joy_knob: Vector2 = Vector2(155, 715)
 var joy_touch_id: int = -1; var joy_vector: Vector2 = Vector2.ZERO
@@ -29,6 +33,8 @@ var hud_layer: CanvasLayer; var hud_drawer: Control
 func _ready() -> void:
 	for i in range(55):
 		skate_scratches.append({"p1": Vector2(randf_range(-940, 940), randf_range(-380, 380)), "dir": Vector2.from_angle(randf_range(0, TAU)) * randf_range(22, 55)})
+	for i in range(20):
+		frozen_bones.append({"p": Vector2(randf_range(-1000, 1000), randf_range(-390, 390)), "ang": randf_range(0, TAU), "skull": i % 4 == 0})
 	_build_rink_collision()
 	y_sort_layer = Node2D.new(); y_sort_layer.y_sort_enabled = true; add_child(y_sort_layer)
 	_spawn_puck_and_teams()
@@ -49,13 +55,20 @@ func _spawn_puck_and_teams() -> void:
 	var pc = CollisionShape2D.new(); var ps = CircleShape2D.new(); ps.radius = 6.0; pc.shape = ps; puck.add_child(pc); y_sort_layer.add_child(puck)
 	var roster_file = FileAccess.open("res://Data/rosters.json", FileAccess.READ)
 	var r_json = JSON.parse_string(roster_file.get_as_text())
-	var home_data = r_json["teams"]["SJ_SHARKS"]; var away_data = r_json["teams"]["LA_KINGS"]
-	for p in home_data["players"]: home_skaters.append(_create_skater(p, 0, Color(home_data["primary"]), Color(home_data["secondary"]), Color(home_data["trim"])))
-	for p in away_data["players"]: away_skaters.append(_create_skater(p, 1, Color(away_data["primary"]), Color(away_data["secondary"]), Color(away_data["trim"])))
+	var teams: Dictionary = r_json["teams"]
+	var keys: Array = teams.keys()
+	var home_key: String = HOME_TEAM_KEY if teams.has(HOME_TEAM_KEY) else keys[0]
+	var others: Array = keys.filter(func(k): return k != home_key)
+	var away_key: String = others[randi() % others.size()]
+	home_data = teams[home_key]; away_data = teams[away_key]
+	home_abbr = home_data["abbr"]; away_abbr = away_data["abbr"]; home_name = home_data["name"]; away_name = away_data["name"]
+	var h_skin = Color(home_data.get("skin", "#7fae6a")); var a_skin = Color(away_data.get("skin", "#7fae6a"))
+	for p in home_data["players"]: home_skaters.append(_create_skater(p, 0, Color(home_data["primary"]), Color(home_data["secondary"]), Color(home_data["trim"]), h_skin))
+	for p in away_data["players"]: away_skaters.append(_create_skater(p, 1, Color(away_data["primary"]), Color(away_data["secondary"]), Color(away_data["trim"]), a_skin))
 	_set_active_human(home_skaters[0])
 
-func _create_skater(p_data: Dictionary, t_id: int, p_col: Color, s_col: Color, tr_col: Color) -> CharacterBody2D:
-	var s = CharacterBody2D.new(); s.set_script(load("res://Scripts/Skater.gd")); s.setup_stats(p_data, t_id, p_col, s_col, tr_col, self)
+func _create_skater(p_data: Dictionary, t_id: int, p_col: Color, s_col: Color, tr_col: Color, skin: Color) -> CharacterBody2D:
+	var s = CharacterBody2D.new(); s.set_script(load("res://Scripts/Skater.gd")); s.setup_stats(p_data, t_id, p_col, s_col, tr_col, self); s.skin_color = skin
 	var c = CollisionShape2D.new(); var sh = CircleShape2D.new(); sh.radius = 13.0; c.shape = sh; s.add_child(c); y_sort_layer.add_child(s)
 	return s
 
@@ -72,6 +85,15 @@ func spawn_ice_spray(pos: Vector2, dir: Vector2) -> void:
 	if ice_sprays.size() > 24: return
 	ice_sprays.append({"pos": pos + Vector2(randf_range(-6, 6), randf_range(-6, 6)), "vel": dir * randf_range(35, 95), "life": 0.28})
 
+func spawn_gore(pos: Vector2, dir: Vector2, limb: bool, skin: Color) -> void:
+	for i in range(6 if limb else 4):
+		if gore_bits.size() > 48: break
+		gore_bits.append({"pos": pos + Vector2(randf_range(-5, 5), randf_range(-8, 4)), "vel": dir.rotated(randf_range(-0.9, 0.9)) * randf_range(60, 190), "life": randf_range(0.5, 1.0), "limb": false, "r": randf_range(2.0, 4.2)})
+	if limb: gore_bits.append({"pos": pos, "vel": dir.rotated(randf_range(-0.5, 0.5)) * 210.0, "life": 1.6, "limb": true, "r": 5.0, "skin": skin})
+
+func _txt_on(c: Color) -> Color:
+	return Color(0.06, 0.07, 0.10) if c.get_luminance() > 0.5 else Color.WHITE
+
 func _enter_faceoff(pos: Vector2, msg: String) -> void:
 	state = GameState.FACEOFF; state_timer = 1.65; faceoff_pos = pos; faceoff_won_by = -1
 	banner_text = msg; banner_timer = 1.65; puck.carrier = null; puck.velocity = Vector2.ZERO; puck.global_position = pos
@@ -80,6 +102,7 @@ func _enter_faceoff(pos: Vector2, msg: String) -> void:
 	var a_off = {"C": Vector2(36, 0),  "LW": Vector2(105, -145),  "RW": Vector2(105, 145),  "LD": Vector2(245, -105),  "RD": Vector2(245, 105),  "G": Vector2(978 - pos.x, -pos.y)}
 	for s in home_skaters: s.global_position = pos + h_off.get(s.role, Vector2(-100, 0)); s.velocity = Vector2.ZERO; s.stunned_timer = 0.0; s.facing_dir = Vector2.RIGHT
 	for s in away_skaters: s.global_position = pos + a_off.get(s.role, Vector2(100, 0)); s.velocity = Vector2.ZERO; s.stunned_timer = 0.0; s.facing_dir = Vector2.LEFT
+	for s in get_all_skaters(): s.missing_limb = false
 	_set_active_human(home_skaters[0])
 
 func _process(delta: float) -> void:
@@ -92,8 +115,15 @@ func _process(delta: float) -> void:
 	for i in range(ice_sprays.size() - 1, -1, -1):
 		ice_sprays[i]["pos"] += ice_sprays[i]["vel"] * delta; ice_sprays[i]["life"] -= delta
 		if ice_sprays[i]["life"] <= 0.0: ice_sprays.remove_at(i)
+	for i in range(gore_bits.size() - 1, -1, -1):
+		var g = gore_bits[i]
+		g["pos"] += g["vel"] * delta; g["vel"] = g["vel"].move_toward(Vector2.ZERO, 260.0 * delta); g["life"] -= delta
+		if g["life"] <= 0.0: gore_bits.remove_at(i)
+	var raging = btn_c_held and rage_meter > 0.05 and state == GameState.PLAY
+	if raging: rage_meter = max(0.0, rage_meter - 0.34 * delta)
+	else: rage_meter = min(1.0, rage_meter + 0.16 * delta)
 	if active_human and is_instance_valid(active_human):
-		active_human.move_input = joy_vector; active_human.turbo_active = btn_c_held
+		active_human.move_input = joy_vector; active_human.turbo_active = raging
 		pass_target_mate = _find_best_pass_target(active_human) if puck.carrier == active_human else null
 	match state:
 		GameState.FACEOFF:
@@ -119,7 +149,7 @@ func _process(delta: float) -> void:
 			if state_timer <= 0.0: _enter_faceoff(faceoff_pos, "POWER PLAY FACEOFF!")
 		GameState.ZAMBONI_INTERMISSION:
 			state_timer -= delta; zamboni_pos.x += 580.0 * delta
-			if state_timer <= 0.0: period += 1; period_clock = 120.0; _enter_faceoff(Vector2.ZERO, "PERIOD %d FACEOFF!" % period)
+			if state_timer <= 0.0: period += 1; period_clock = 120.0; _enter_faceoff(Vector2.ZERO, "PERIOD %d FACEOFF!" % period + (" - THE FULL MOON RISES!" if period >= 3 else ""))
 	queue_redraw()
 	if hud_drawer: hud_drawer.queue_redraw()
 
@@ -145,9 +175,9 @@ func _handle_puck_pickups_and_rules() -> void:
 func _check_single_goal_scored() -> void:
 	if abs(puck.global_position.y) < 52.0:
 		if puck.global_position.x > 990.0 and puck.global_position.x < 1048.0:
-			home_score += 1; _trigger_goal_celebration("GOAL! PACIFIC TEAL SHARKS SCORE!", 0)
+			home_score += 1; _trigger_goal_celebration("GOAL! %s SCORE!" % home_name, 0)
 		elif puck.global_position.x < -990.0 and puck.global_position.x > -1048.0:
-			away_score += 1; _trigger_goal_celebration("GOAL! ROYAL GOLD KINGS SCORE!", 1)
+			away_score += 1; _trigger_goal_celebration("GOAL! %s SCORE!" % away_name, 1)
 
 func _trigger_goal_celebration(msg: String, scoring_team: int) -> void:
 	state = GameState.GOAL_CELEBRATION; state_timer = 3.8; last_scoring_team = scoring_team
@@ -159,22 +189,22 @@ func _trigger_goal_celebration(msg: String, scoring_team: int) -> void:
 func _end_period() -> void:
 	if period < 3:
 		state = GameState.ZAMBONI_INTERMISSION; state_timer = 3.8; zamboni_pos = Vector2(-1050, 0)
-		banner_text = "END OF PERIOD %d - ZAMBONI ICE RESURFACING" % period; banner_timer = 3.8
+		banner_text = "END OF PERIOD %d - THE HEARSE-BONI RESURFACES THE ICE" % period; banner_timer = 3.8
 		AudioManager.play_sfx("organ_charge", 0.9)
 	else:
-		state = GameState.GAME_OVER; banner_text = "FINAL: PTS %d - %d RGK (TAP TO PLAY AGAIN)" % [home_score, away_score]; banner_timer = 999.0
+		state = GameState.GAME_OVER; banner_text = "FINAL: %s %d - %d %s (TAP TO PLAY AGAIN)" % [home_abbr, home_score, away_score, away_abbr]; banner_timer = 999.0
 
 func on_crushing_board_hit(hitter: CharacterBody2D, victim: CharacterBody2D) -> void:
 	if state != GameState.PLAY: return
 	var roll = randf()
 	if roll < 0.16:
 		state = GameState.FIGHT; state_timer = 2.6; faceoff_pos = Vector2.ZERO
-		banner_text = "GLOVES DROPPED! #%s %s vs #%s %s!" % [hitter.jersey_num, hitter.player_name, victim.jersey_num, victim.player_name]; banner_timer = 2.6
+		banner_text = "BITE OR BRAWL! #%s %s vs #%s %s!" % [hitter.jersey_num, hitter.player_name, victim.jersey_num, victim.player_name]; banner_timer = 2.6
 		AudioManager.play_sfx("whistle", 0.9)
 	elif roll < 0.32:
 		state = GameState.PENALTY_CALL; state_timer = 2.2; powerplay_team = victim.team_id; powerplay_clock = 30.0
 		faceoff_pos = Vector2(580 if victim.team_id == 0 else -580, -180)
-		banner_text = "2:00 POWER PLAY! BOARDING ON #%s %s" % [hitter.jersey_num, hitter.player_name]; banner_timer = 2.2
+		banner_text = "SENT TO THE CRYPT! POWER PLAY - BOARDING ON #%s %s" % [hitter.jersey_num, hitter.player_name]; banner_timer = 2.2
 		AudioManager.play_sfx("whistle", 0.9)
 
 func _find_best_pass_target(sender: CharacterBody2D) -> CharacterBody2D:
@@ -251,7 +281,7 @@ func _on_button_b_pressed() -> void:
 	if not active_human: return
 	if puck.pass_in_flight and puck.last_team == 0 and active_human.global_position.distance_to(puck.global_position) < 105.0:
 		puck.global_position = active_human.global_position + active_human.facing_dir * 22.0
-		execute_shot(active_human, 1.0, true); banner_text = "BOOM! ONE-TIMER BLAST!"; banner_timer = 1.1; return
+		execute_shot(active_human, 1.0, true); banner_text = "BRAAAINS! ONE-TIMER BLAST!"; banner_timer = 1.1; return
 	if puck.carrier == active_human: active_human.is_charging_shot = true; active_human.shot_charge = 0.32; Input.vibrate_handheld(20)
 	else: active_human.start_body_check()
 
@@ -293,24 +323,38 @@ func _build_hud() -> void:
 
 func _draw() -> void:
 	var font = ThemeDB.fallback_font
-	draw_rect(Rect2(-1320, -640, 2640, 1280), Color(0.10, 0.11, 0.16), true)
-	for cx in range(-1140, 1140, 32):
-		draw_rect(Rect2(cx, -520, 14, 14), Color.from_hsv(abs(cx * 0.013) - floor(abs(cx * 0.013)), 0.55, 0.78))
-		draw_rect(Rect2(cx, 488, 14, 14), Color.from_hsv(abs(cx * 0.019) - floor(abs(cx * 0.019)), 0.55, 0.78))
-	draw_rect(Rect2(-1100, -440, 2200, 880), Color(0.89, 0.95, 0.99), true)
+	var t_now = Time.get_ticks_msec() * 0.001
+	draw_rect(Rect2(-1320, -640, 2640, 1280), Color(0.04, 0.07, 0.06), true)
+	draw_rect(Rect2(-1100, -440, 2200, 880), Color(0.80, 0.91, 0.86), true)
+	for b in frozen_bones:
+		var bp: Vector2 = b["p"]; var bcol = Color(0.45, 0.62, 0.55, 0.30)
+		if b["skull"]:
+			draw_circle(bp, 10.0, bcol); draw_rect(Rect2(bp.x - 6, bp.y + 6, 12, 8), bcol, true)
+			draw_circle(bp + Vector2(-4, -1), 2.6, Color(0.25, 0.4, 0.34, 0.45)); draw_circle(bp + Vector2(4, -1), 2.6, Color(0.25, 0.4, 0.34, 0.45))
+		else:
+			var bd = Vector2.from_angle(b["ang"]) * 15.0
+			draw_line(bp - bd, bp + bd, bcol, 3.0); draw_circle(bp - bd, 3.6, bcol); draw_circle(bp + bd, 3.6, bcol)
 	for sc in skate_scratches: draw_line(sc["p1"], sc["p1"] + sc["dir"], Color(0.76, 0.87, 0.95, 0.55), 1.6)
 	for sp in ice_sprays: draw_circle(sp["pos"], 3.2, Color(1.0, 1.0, 1.0, sp["life"] * 2.5))
+	for g in gore_bits:
+		if g["limb"]: draw_rect(Rect2(g["pos"] + Vector2(-5, -2), Vector2(10, 4)), g["skin"], true)
+		else: draw_circle(g["pos"], g["r"], Color(0.35, 0.80, 0.20, clamp(g["life"] * 1.6, 0.0, 0.85)))
+	for i in range(7):
+		var fp = Vector2(sin(t_now * 0.12 + i * 1.9) * 780.0, cos(t_now * 0.09 + i * 2.7) * 300.0)
+		draw_circle(fp, 190.0 + 30.0 * sin(t_now * 0.3 + i), Color(0.75, 1.0, 0.85, 0.055))
 	draw_line(Vector2(-990, -440), Vector2(-990, 440), Color(0.82, 0.15, 0.15, 0.75), 4.0)
 	draw_line(Vector2(990, -440), Vector2(990, 440), Color(0.82, 0.15, 0.15, 0.75), 4.0)
 	draw_line(Vector2(-330, -440), Vector2(-330, 440), Color(0.12, 0.38, 0.86, 0.82), 11.0)
 	draw_line(Vector2(330, -440), Vector2(330, 440), Color(0.12, 0.38, 0.86, 0.82), 11.0)
 	draw_line(Vector2(0, -440), Vector2(0, 440), Color(0.84, 0.12, 0.14, 0.82), 10.0)
 	draw_dashed_line(Vector2(0, -440), Vector2(0, 440), Color(0.92, 0.96, 1.0, 0.9), 6.0, 18.0)
-	draw_circle(Vector2.ZERO, 118.0, Color(0.0, 0.55, 0.55, 0.18))
+	draw_circle(Vector2.ZERO, 118.0, Color(0.30, 0.85, 0.40, 0.20))
 	draw_arc(Vector2.ZERO, 118.0, 0, TAU, 48, Color(0.12, 0.38, 0.86, 0.85), 5.0)
-	draw_rect(Rect2(-46, -28, 92, 56), Color(0.08, 0.15, 0.32, 0.85), true)
-	draw_rect(Rect2(-46, -28, 92, 56), Color(0.95, 0.78, 0.15), false, 3.0)
-	draw_string(font, Vector2(-44, 9), "NHL '94", HORIZONTAL_ALIGNMENT_CENTER, 88, 22, Color(0.95, 0.82, 0.2))
+	draw_rect(Rect2(-46, -28, 92, 56), Color(0.05, 0.16, 0.10, 0.88), true)
+	draw_rect(Rect2(-46, -28, 92, 56), Color(0.35, 0.90, 0.40), false, 3.0)
+	draw_circle(Vector2(0, -8), 12.0, Color(0.90, 0.95, 0.85)); draw_rect(Rect2(-7, 0, 14, 8), Color(0.90, 0.95, 0.85), true)
+	draw_circle(Vector2(-4.5, -9), 3.2, Color(0.05, 0.16, 0.10)); draw_circle(Vector2(4.5, -9), 3.2, Color(0.05, 0.16, 0.10))
+	draw_string(font, Vector2(-44, 22), "ZHL", HORIZONTAL_ALIGNMENT_CENTER, 88, 14, Color(0.55, 1.0, 0.5))
 	for dot in [Vector2(-640, -200), Vector2(-640, 200), Vector2(640, -200), Vector2(640, 200)]:
 		draw_arc(dot, 92.0, 0, TAU, 36, Color(0.84, 0.12, 0.14, 0.72), 3.5); draw_circle(dot, 8.0, Color(0.84, 0.12, 0.14))
 	_draw_pro_goal_net(Vector2(-990, 0), -1.0); _draw_pro_goal_net(Vector2(990, 0), 1.0)
@@ -331,8 +375,11 @@ func _draw() -> void:
 		draw_line(Vector2(gx, -444), Vector2(gx, -468), Color(0.7, 0.85, 0.95, 0.65), 3.0)
 		draw_line(Vector2(gx, 444), Vector2(gx, 468), Color(0.7, 0.85, 0.95, 0.65), 3.0)
 	if state == GameState.ZAMBONI_INTERMISSION:
-		draw_rect(Rect2(zamboni_pos.x - 60, zamboni_pos.y - 35, 120, 70), Color(0.95, 0.95, 0.98), true)
-		draw_rect(Rect2(zamboni_pos.x - 10, zamboni_pos.y - 30, 65, 60), Color(0.0, 0.55, 0.55), true)
+		draw_rect(Rect2(zamboni_pos.x - 70, zamboni_pos.y - 32, 140, 64), Color(0.07, 0.07, 0.09), true)
+		draw_rect(Rect2(zamboni_pos.x + 22, zamboni_pos.y - 26, 40, 52), Color(0.22, 0.25, 0.30), true)
+		draw_rect(Rect2(zamboni_pos.x - 62, zamboni_pos.y - 22, 74, 44), Color(0.45, 0.30, 0.18), true)
+		draw_rect(Rect2(zamboni_pos.x - 62, zamboni_pos.y - 22, 74, 44), Color(0.75, 0.62, 0.30), false, 3.0)
+		draw_circle(Vector2(zamboni_pos.x + 70, zamboni_pos.y), 9.0, Color(0.5, 1.0, 0.5, 0.8))
 
 func _draw_pro_goal_net(post_center: Vector2, dir_sign: float) -> void:
 	draw_circle(post_center, 54.0, Color(0.32, 0.72, 0.96, 0.55))
@@ -349,34 +396,41 @@ func _draw_pro_goal_net(post_center: Vector2, dir_sign: float) -> void:
 
 func _draw_hud() -> void:
 	var font = ThemeDB.fallback_font
+	var hc = Color(home_data["primary"]); var ac = Color(away_data["primary"])
+	if period >= 3: hud_drawer.draw_rect(Rect2(0, 0, 1920, 864), Color(0.55, 0.0, 0.08, 0.10), true)
 	if goal_flash_alpha > 0.01:
 		hud_drawer.draw_rect(Rect2(0, 0, 1920, 864), Color(1.0, 0.2, 0.2, goal_flash_alpha * 0.45), true)
 	hud_drawer.draw_rect(Rect2(490, 14, 940, 82), Color(0.05, 0.07, 0.12, 0.84), true)
-	hud_drawer.draw_rect(Rect2(494, 18, 250, 74), Color(0.0, 0.55, 0.55, 0.85), true)
-	hud_drawer.draw_rect(Rect2(1176, 18, 250, 74), Color(0.96, 0.72, 0.0, 0.85), true)
+	hud_drawer.draw_rect(Rect2(494, 18, 250, 74), Color(hc, 0.9), true)
+	hud_drawer.draw_rect(Rect2(1176, 18, 250, 74), Color(ac, 0.9), true)
 	hud_drawer.draw_rect(Rect2(490, 14, 940, 82), Color(0.95, 0.82, 0.2, 0.9), false, 3.0)
-	hud_drawer.draw_string(font, Vector2(505, 58), "PTS  %d" % home_score, HORIZONTAL_ALIGNMENT_CENTER, 230, 36, Color.WHITE)
-	hud_drawer.draw_string(font, Vector2(1185, 58), "%d  RGK" % away_score, HORIZONTAL_ALIGNMENT_CENTER, 230, 36, Color(0.12, 0.08, 0.25))
+	hud_drawer.draw_string(font, Vector2(505, 58), "%s  %d" % [home_abbr, home_score], HORIZONTAL_ALIGNMENT_CENTER, 230, 36, _txt_on(hc))
+	hud_drawer.draw_string(font, Vector2(1185, 58), "%d  %s" % [away_score, away_abbr], HORIZONTAL_ALIGNMENT_CENTER, 230, 36, _txt_on(ac))
 	hud_drawer.draw_string(font, Vector2(750, 52), "P%d   %02d:%02d" % [period, int(period_clock) / 60, int(period_clock) % 60], HORIZONTAL_ALIGNMENT_CENTER, 420, 32, Color(1.0, 0.94, 0.25))
 	var sub_str = "SHOTS ON GOAL:  %d  -  %d" % [home_sog, away_sog]
-	if powerplay_team != -1: sub_str = "POWER PLAY (%s): %02ds  |  SHOTS: %d-%d" % ["PTS" if powerplay_team == 0 else "RGK", int(powerplay_clock), home_sog, away_sog]
+	if powerplay_team != -1: sub_str = "POWER PLAY (%s): %02ds  |  SHOTS: %d-%d" % [home_abbr if powerplay_team == 0 else away_abbr, int(powerplay_clock), home_sog, away_sog]
 	hud_drawer.draw_string(font, Vector2(750, 84), sub_str, HORIZONTAL_ALIGNMENT_CENTER, 420, 20, Color(0.82, 0.94, 1.0))
 	if banner_timer > 0.0 and banner_text != "":
 		hud_drawer.draw_rect(Rect2(580, 104, 760, 38), Color(0.04, 0.05, 0.09, 0.68), true)
 		hud_drawer.draw_rect(Rect2(580, 104, 760, 38), Color(1.0, 0.85, 0.2, 0.75), false, 2.0)
 		hud_drawer.draw_string(font, Vector2(590, 130), banner_text, HORIZONTAL_ALIGNMENT_CENTER, 740, 21, Color.WHITE)
-	hud_drawer.draw_circle(joy_center, 86.0, Color(0.08, 0.1, 0.15, 0.34))
+	hud_drawer.draw_circle(joy_center, 86.0, Color(0.04, 0.06, 0.08, 0.52))
 	hud_drawer.draw_arc(joy_center, 86.0, 0, TAU, 32, Color(0.9, 0.95, 1.0, 0.42), 3.0)
-	hud_drawer.draw_circle(joy_knob, 36.0, Color(0.95, 0.82, 0.15, 0.48))
+	hud_drawer.draw_circle(joy_knob, 36.0, Color(0.55, 0.95, 0.35, 0.75))
 	var on_offense = (puck and puck.carrier != null and puck.carrier.team_id == 0)
 	var lbl_a = "WIN!" if state == GameState.FACEOFF else ("PASS" if on_offense else "SWITCH")
 	var lbl_b = "WIN!" if state == GameState.FACEOFF else ("SHOOT" if on_offense else ("1-TIMER!" if (puck and puck.pass_in_flight) else "CHECK"))
-	_draw_arcade_btn(btn_a_rect, Color(0.1, 0.78, 0.32, 0.38), lbl_a, font)
-	_draw_arcade_btn(btn_b_rect, Color(0.92, 0.22, 0.18, 0.38), lbl_b, font)
-	_draw_arcade_btn(btn_c_rect, Color(0.15, 0.58, 0.96, 0.42), "TURBO", font)
+	_draw_arcade_btn(btn_a_rect, Color(0.08, 0.60, 0.25, 0.72), lbl_a, font)
+	_draw_arcade_btn(btn_b_rect, Color(0.85, 0.16, 0.14, 0.72), lbl_b, font)
+	_draw_arcade_btn(btn_c_rect, Color(0.50, 0.10, 0.60, 0.72), "RAGE", font)
+	var rb = Rect2(btn_c_rect.position.x + 6, btn_c_rect.position.y - 18, btn_c_rect.size.x - 12, 10)
+	hud_drawer.draw_rect(rb, Color(0, 0, 0, 0.6), true)
+	hud_drawer.draw_rect(Rect2(rb.position, Vector2(rb.size.x * rage_meter, rb.size.y)), Color(0.95, 0.2, 0.25), true)
+	hud_drawer.draw_rect(rb, Color(1, 1, 1, 0.7), false, 2.0)
 
 func _draw_arcade_btn(r: Rect2, col: Color, text: String, font: Font) -> void:
 	var c = r.position + r.size * 0.5
 	hud_drawer.draw_circle(c, r.size.x * 0.47, col)
-	hud_drawer.draw_arc(c, r.size.x * 0.47, 0, TAU, 28, Color(1.0, 1.0, 1.0, 0.45), 3.5)
-	hud_drawer.draw_string(font, Vector2(r.position.x, c.y + 8), text, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 22, Color(1.0, 1.0, 1.0, 0.82))
+	hud_drawer.draw_arc(c, r.size.x * 0.47, 0, TAU, 28, Color(1.0, 1.0, 1.0, 0.85), 4.0)
+	hud_drawer.draw_string(font, Vector2(r.position.x + 2, c.y + 11), text, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 24, Color(0, 0, 0, 0.75))
+	hud_drawer.draw_string(font, Vector2(r.position.x, c.y + 9), text, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 24, Color.WHITE)
