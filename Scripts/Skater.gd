@@ -13,7 +13,13 @@ var is_human: bool = false
 var is_goalie: bool = false
 var facing_dir: Vector2 = Vector2.RIGHT
 var move_input: Vector2 = Vector2.ZERO
+# v3.2 feel tuning (tester fix 2): turbo is a meter now, not infinite.
+const TURBO_MULTIPLIER := 1.30 # v3.1: same 1.30, but turbo never ran out
+const TURBO_DRAIN_PER_SEC := 0.45 # ~2.2 s of continuous turbo from full
+const TURBO_REGEN_PER_SEC := 0.30 # ~3.3 s to refill from empty
+const SHOT_CHARGE_RATE := 2.0 # v3.1: 1.75 — hold-release winds up faster
 var turbo_active: bool = false
+var turbo_meter: float = 1.0
 var shot_charge: float = 0.0
 var is_charging_shot: bool = false
 var check_timer: float = 0.0
@@ -66,7 +72,12 @@ func _physics_process(delta: float) -> void:
 	if is_goalie:
 		_process_goalie(delta); queue_redraw(); return
 	if not is_human: _process_ai_role(delta)
-	var max_spd = (205.0 + stat_spd * 48.0) * (1.30 if turbo_active else 1.0)
+	var turbo_on := turbo_active and turbo_meter > 0.02
+	if turbo_active and turbo_meter > 0.0:
+		turbo_meter = maxf(0.0, turbo_meter - TURBO_DRAIN_PER_SEC * delta)
+	elif not turbo_active:
+		turbo_meter = minf(1.0, turbo_meter + TURBO_REGEN_PER_SEC * delta)
+	var max_spd = (205.0 + stat_spd * 48.0) * (TURBO_MULTIPLIER if turbo_on else 1.0)
 	var accel = 520.0 + stat_spd * 75.0
 	if check_timer <= 0.0:
 		if move_input.length() > 0.1:
@@ -78,7 +89,7 @@ func _physics_process(delta: float) -> void:
 				velocity = velocity.move_toward(facing_dir * max_spd, accel * delta)
 		else:
 			velocity = velocity.move_toward(Vector2.ZERO, 175.0 * delta)
-	if is_charging_shot: shot_charge = clamp(shot_charge + delta * 1.75, 0.25, 1.0)
+	if is_charging_shot: shot_charge = clamp(shot_charge + delta * SHOT_CHARGE_RATE, 0.25, 1.0)
 	for other in game_mgr.get_all_skaters():
 		if other != self:
 			var diff = global_position - other.global_position
@@ -181,6 +192,9 @@ func _draw() -> void:
 			draw_rect(Rect2(-17, -32, 34.0 * shot_charge, 4), Color(1.0, 0.3, 0.1), true)
 			var aim_dir = Vector2(1.0 if team_id == 0 else -1.0, clamp(facing_dir.y * 0.45, -0.4, 0.4)).normalized()
 			draw_dashed_line(Vector2.ZERO, aim_dir * 165.0, Color(1.0, 0.25, 0.15, 0.75), 2.5, 8.0)
+		if turbo_meter < 1.0:
+			draw_rect(Rect2(-18, -42, 36, 5), Color(0.1, 0.1, 0.1, 0.85), true)
+			draw_rect(Rect2(-17, -41, 34.0 * turbo_meter, 3), Color(0.15, 0.58, 0.96), true)
 	if is_goalie:
 		_draw_goalie_sprite(); return
 	if stunned_timer > 0.0:

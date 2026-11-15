@@ -3,6 +3,18 @@ extends Node2D
 const Layout = preload("res://Scripts/MenuLayout.gd")
 const Logo = preload("res://Scripts/IceLogo.gd")
 const MenuScript = preload("res://Scripts/MenuController.gd")
+const GamepadScript = preload("res://Scripts/GamepadManager.gd")
+
+# v3.2 feel tuning. Values marked "v3.1" are the shipped v3.1 numbers;
+# change a value only after a live keyboard playtest and log before/after
+# in docs/playtest_checklists.md (tester fixes 2, 8, 14).
+const TUNING := {
+	"pass_speed_base": 640.0, # v3.1: 590.0 — passes were the slowest-feeling action
+	"pass_speed_per_pas": 45.0,
+	"shot_speed_base": 740.0,
+	"shot_speed_per_sht": 78.0,
+	"turbo_multiplier": 1.30,
+}
 
 enum AppMode { TITLE = 0, TEAMS = 1, MATCH = 2 }
 enum GameState { FACEOFF, PLAY, GOAL_CELEBRATION, PENALTY_CALL, FIGHT, INTERMISSION, GAME_OVER }
@@ -10,6 +22,7 @@ enum GameState { FACEOFF, PLAY, GOAL_CELEBRATION, PENALTY_CALL, FIGHT, INTERMISS
 var app_mode: AppMode = AppMode.TITLE
 var paused: bool = false
 var menu: Node = null
+var gamepad: RefCounted = null
 var menu_time: float = 0.0
 
 var state: GameState = GameState.FACEOFF
@@ -87,6 +100,7 @@ func _ready() -> void:
 	_build_hud()
 	menu = MenuScript.new()
 	add_child(menu)
+	gamepad = GamepadScript.new()
 	_load_roster()
 	_refresh_layout()
 	show_title()
@@ -252,10 +266,10 @@ func _enter_faceoff(pos: Vector2, msg: String) -> void:
 	var a_off = {"C": Vector2(36, 0),  "LW": Vector2(105, -145),  "RW": Vector2(105, 145),  "LD": Vector2(245, -105),  "RD": Vector2(245, 105),  "G": Vector2(978 - pos.x, -pos.y)}
 	for s in home_skaters:
 		s.global_position = pos + h_off.get(s.role, Vector2(-100, 0)); s.velocity = Vector2.ZERO; s.stunned_timer = 0.0; s.facing_dir = Vector2.RIGHT
-		s.is_charging_shot = false; s.shot_charge = 0.0; s.turbo_active = false
+		s.is_charging_shot = false; s.shot_charge = 0.0; s.turbo_active = false; s.turbo_meter = 1.0
 	for s in away_skaters:
 		s.global_position = pos + a_off.get(s.role, Vector2(100, 0)); s.velocity = Vector2.ZERO; s.stunned_timer = 0.0; s.facing_dir = Vector2.LEFT
-		s.is_charging_shot = false; s.shot_charge = 0.0; s.turbo_active = false
+		s.is_charging_shot = false; s.shot_charge = 0.0; s.turbo_active = false; s.turbo_meter = 1.0
 	_set_active_human(home_skaters[0])
 
 func _process(delta: float) -> void:
@@ -268,6 +282,7 @@ func _process(delta: float) -> void:
 		return
 	_poll_keyboard()
 	_poll_shoot_key()
+	_poll_gamepad()
 	if hitstop_timer > 0.0:
 		hitstop_timer -= delta / max(0.01, Engine.time_scale)
 		if hitstop_timer <= 0.0: Engine.time_scale = 1.0
@@ -382,7 +397,7 @@ func execute_pass(sender: CharacterBody2D) -> void:
 	var best_mate = _find_best_pass_target(sender)
 	var pass_dir = (best_mate.global_position + best_mate.velocity * 0.24 - sender.global_position).normalized() if best_mate else sender.facing_dir
 	sender.pickup_cooldown = 0.32
-	puck.launch(pass_dir, 590.0 + sender.stat_pas * 45.0, true, sender.team_id, false)
+	puck.launch(pass_dir, TUNING["pass_speed_base"] + sender.stat_pas * TUNING["pass_speed_per_pas"], true, sender.team_id, false)
 	AudioManager.play_sfx("pass", 0.85)
 	if best_mate and sender.team_id == 0: _set_active_human(best_mate)
 	Input.vibrate_handheld(20)
@@ -393,7 +408,7 @@ func execute_shot(shooter: CharacterBody2D, charge_ratio: float, is_one_timer: b
 	var corner_y = clamp(shooter.facing_dir.y * 48.0, -42.0, 42.0)
 	var spread = (5 - shooter.stat_acc) * 6.0
 	var shot_dir = (Vector2(target_x, corner_y + randf_range(-spread, spread)) - puck.global_position).normalized()
-	var final_spd = (740.0 + shooter.stat_sht * 78.0) * clamp(charge_ratio, 0.58, 1.0) * (1.28 if is_one_timer else 1.0)
+	var final_spd = (TUNING["shot_speed_base"] + shooter.stat_sht * TUNING["shot_speed_per_sht"]) * clamp(charge_ratio, 0.58, 1.0) * (1.28 if is_one_timer else 1.0)
 	shooter.pickup_cooldown = 0.35; shooter.is_charging_shot = false; shooter.shot_charge = 0.0; shooter.shoot_anim_timer = 0.26
 	puck.launch(shot_dir, final_spd, false, shooter.team_id, true)
 	if shooter.team_id == 0: home_sog += 1
@@ -406,6 +421,14 @@ func _input(event: InputEvent) -> void:
 	if app_mode != AppMode.MATCH or paused:
 		if menu:
 			menu.handle_event(event, self)
+		return
+	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		if app_mode != AppMode.MATCH or paused:
+			if menu:
+				menu.handle_event(event, self)
+			return
+		if gamepad:
+			gamepad.handle_event(event, self)
 		return
 	if event is InputEventKey:
 		_game_key(event)
@@ -514,7 +537,7 @@ func _poll_keyboard() -> void:
 		keyboard_driving = false
 
 func _poll_shoot_key() -> void:
-	var down := Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_J) or Input.is_key_pressed(KEY_Z)
+	var down := Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_J) or Input.is_key_pressed(KEY_Z) or (gamepad != null and gamepad.is_shoot_held())
 	if not btn_b_held:
 		if down and not shoot_key_down:
 			_on_button_b_pressed()
@@ -522,8 +545,20 @@ func _poll_shoot_key() -> void:
 			_on_button_b_released()
 	shoot_key_down = down
 
+func _poll_gamepad() -> void:
+	if not gamepad or joy_touch_id != -1:
+		return
+	var pad_move := gamepad.poll_move()
+	if pad_move.length() > 0.05:
+		joy_vector = pad_move
+		joy_knob = joy_center + pad_move * (joy_radius * 0.72)
+		keyboard_driving = false
+	elif not keyboard_driving:
+		joy_vector = Vector2.ZERO
+		joy_knob = joy_center
+
 func _turbo_held() -> bool:
-	return btn_c_held or Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_L)
+	return btn_c_held or Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_L) or (gamepad != null and gamepad.is_turbo_held())
 
 func _on_button_a_pressed() -> void:
 	if state == GameState.FACEOFF:
@@ -719,7 +754,7 @@ func _draw_hud() -> void:
 		hud_drawer.draw_rect(banner, Color(1.0, 0.85, 0.2, 0.75), false, 2.0)
 		Logo.draw_centered(hud_drawer, font, banner, banner_text, 20, Color.WHITE)
 	if state == GameState.GAME_OVER:
-		Logo.draw_centered(hud_drawer, font, Rect2(board.position.x, board.end.y + 54, board.size.x, 32), "TAP THE ICE FOR A REMATCH     ·     PAUSE TO QUIT", 18, Color("#E7F6FF"))
+		Logo.draw_centered(hud_drawer, font, Rect2(board.position.x, board.end.y + 54, board.size.x, 32), "PRESS ENTER OR START FOR A REMATCH     ·     TAP THE ICE     ·     PAUSE TO QUIT", 18, Color("#E7F6FF"))
 	_draw_pause_button()
 	hud_drawer.draw_circle(joy_center, joy_radius, Color(0.08, 0.1, 0.15, 0.34))
 	hud_drawer.draw_arc(joy_center, joy_radius, 0, TAU, 40, Color(0.9, 0.95, 1.0, 0.55), 3.0, true)
@@ -759,6 +794,12 @@ func _self_test() -> void:
 		return
 	if not _ok(home_skaters.is_empty(), "no skaters before a match"):
 		return
+	if not _ok(gamepad != null, "gamepad manager present"):
+		return
+	if not _ok(GamepadScript.DEADZONE == 0.2, "gamepad deadzone 0.20"):
+		return
+	if not _ok(float(TUNING["pass_speed_base"]) == 640.0, "tuning pass speed 640"):
+		return
 	start_match(0)
 	if not _ok(app_mode == AppMode.MATCH, "match started"):
 		return
@@ -789,6 +830,16 @@ func _self_test() -> void:
 	if not _ok(str(home_info.get("abbr", "")) == "RWL" and str(away_info.get("abbr", "")) == "HCF", "swapped clubs"):
 		return
 	if not _ok(home_skaters[0].player_name == "MARLOW", "player club is home"):
+		return
+	quit_to_title()
+	if not _ok(app_mode == AppMode.TITLE, "quit to title again"):
+		return
+	show_team_select()
+	var quick_key := InputEventKey.new()
+	quick_key.keycode = KEY_ENTER
+	quick_key.pressed = true
+	menu.handle_event(quick_key, self)
+	if not _ok(app_mode == AppMode.MATCH and str(home_info.get("abbr", "")) == "HCF", "quick match starts first club"):
 		return
 	print("SELF-TEST OK")
 	get_tree().quit(0)

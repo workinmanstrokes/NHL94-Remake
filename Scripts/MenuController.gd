@@ -60,6 +60,9 @@ func handle_event(event: InputEvent, gm) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo:
 		show_focus = true
 		_menu_key(event.keycode, gm)
+	elif event is InputEventJoypadButton and event.pressed:
+		show_focus = true
+		_menu_pad(event.button_index, gm)
 
 func draw_on(canvas: CanvasItem, vp: Vector2, gm, t: float) -> void:
 	var font := ThemeDB.fallback_font
@@ -108,6 +111,11 @@ func _menu_key(key: Key, gm) -> void:
 				_activate("back", gm)
 			elif selected_team >= 0:
 				_activate("start", gm)
+			else:
+				# Quick match: Enter with no club picked starts the first
+				# club, so title -> teams -> match is two inputs (v3.2 fix 3).
+				selected_team = 0 if focus != "card1" else 1
+				_activate("start", gm)
 	elif gm.paused:
 		var order: Array[String] = ["resume", "restart", "quit", "privacy"]
 		var idx := order.find(focus)
@@ -120,6 +128,41 @@ func _menu_key(key: Key, gm) -> void:
 		elif key == KEY_UP or key == KEY_W:
 			focus = order[maxi(idx - 1, 0)]
 		elif key == KEY_ENTER or key == KEY_KP_ENTER or key == KEY_SPACE:
+			_activate(focus if focus in order else "resume", gm)
+
+func _menu_pad(button: JoyButton, gm) -> void:
+	if gm.app_mode == Layout.MODE_TITLE:
+		if button == JOY_BUTTON_DPAD_LEFT:
+			focus = "play"
+		elif button == JOY_BUTTON_DPAD_RIGHT:
+			focus = "privacy"
+		elif button == JOY_BUTTON_A or button == JOY_BUTTON_START:
+			_activate(focus, gm)
+	elif gm.app_mode == Layout.MODE_TEAMS:
+		if button == JOY_BUTTON_B:
+			_activate("back", gm)
+		elif button == JOY_BUTTON_DPAD_LEFT:
+			selected_team = 0
+			focus = "card0"
+		elif button == JOY_BUTTON_DPAD_RIGHT:
+			selected_team = 1
+			focus = "card1"
+		elif button == JOY_BUTTON_A or button == JOY_BUTTON_START:
+			if selected_team < 0:
+				selected_team = 0 if focus != "card1" else 1
+			_activate("start", gm)
+	elif gm.paused:
+		var order: Array[String] = ["resume", "restart", "quit", "privacy"]
+		var idx := order.find(focus)
+		if idx < 0:
+			idx = 0
+		if button == JOY_BUTTON_B or button == JOY_BUTTON_START:
+			_activate("resume", gm)
+		elif button == JOY_BUTTON_DPAD_DOWN:
+			focus = order[mini(idx + 1, order.size() - 1)]
+		elif button == JOY_BUTTON_DPAD_UP:
+			focus = order[maxi(idx - 1, 0)]
+		elif button == JOY_BUTTON_A:
 			_activate(focus if focus in order else "resume", gm)
 
 func _activate(id: String, gm) -> void:
@@ -158,7 +201,9 @@ func _draw_title(canvas: CanvasItem, vp: Vector2, font: Font, t: float) -> void:
 	Logo.draw_mark(canvas, Vector2(vp.x * 0.5, ice_mid), clampf((float(ui["ice_bottom"]) - float(ui["ice_top"])) * 0.18, 18.0, 36.0), t)
 	_draw_button(canvas, font, ui["play"], "PLAY", "primary", _hot("play"), pressed == "play", "")
 	_draw_button(canvas, font, ui["privacy"], "PRIVACY", "ghost", _hot("privacy"), pressed == "privacy", "link")
-	Logo.draw_centered(canvas, font, ui["hint"], "STICK OR WASD MOVE     X PASS     HOLD SPACE SHOOT     SHIFT TURBO     ESC PAUSE", 18, Color("#D5E8F8"))
+	Logo.draw_centered(canvas, font, ui["hint"], "WASD / ARROWS MOVE  ·  X OR K PASS  ·  HOLD SPACE OR J SHOOT  ·  SHIFT OR L TURBO  ·  ESC PAUSE", 18, Color("#D5E8F8"))
+	var pad_hint := Rect2(ui["hint"].position + Vector2(0, 32), ui["hint"].size)
+	Logo.draw_centered(canvas, font, pad_hint, "PAD: LEFT STICK MOVE  ·  A / B PASS  ·  X SHOOT  ·  Y TURBO  ·  START PAUSE  —  ENTER, ENTER FOR A QUICK MATCH", 16, Color("#D5E8F8"))
 
 func _draw_teams(canvas: CanvasItem, vp: Vector2, font: Font, t: float, gm) -> void:
 	var ui := Layout.team_select(vp)
@@ -179,7 +224,7 @@ func _draw_teams(canvas: CanvasItem, vp: Vector2, font: Font, t: float, gm) -> v
 		canvas,
 		font,
 		Rect2(vp.x * 0.5 + 270.0, ui["start"].position.y, vp.x * 0.5 - 310.0, ui["start"].size.y),
-		"ARROWS CHOOSE    ENTER STARTS    ESC BACK",
+		"ARROWS CHOOSE  ·  ENTER STARTS  ·  ESC BACK  ·  ENTER ALONE = QUICK MATCH",
 		16,
 		Color("#D5E8F8")
 	)
@@ -197,6 +242,10 @@ func _draw_pause(canvas: CanvasItem, vp: Vector2, font: Font, _t: float) -> void
 	_draw_button(canvas, font, ui["restart"], "RESTART", "ghost", _hot("restart"), pressed == "restart", "")
 	_draw_button(canvas, font, ui["quit"], "QUIT TO TITLE", "ghost", _hot("quit"), pressed == "quit", "")
 	_draw_button(canvas, font, ui["privacy"], "PRIVACY", "ghost", _hot("privacy"), pressed == "privacy", "link")
+	var ctl: Rect2 = ui["controls"]
+	Logo.draw_centered(canvas, font, Rect2(ctl.position, Vector2(ctl.size.x, 26)), "KEYBOARD: WASD MOVE  ·  X / K PASS  ·  SPACE / J SHOOT  ·  SHIFT / L TURBO", 16, Color("#D5E8F8"))
+	Logo.draw_centered(canvas, font, Rect2(ctl.position + Vector2(0, 28), Vector2(ctl.size.x, 26)), "PAD: LEFT STICK MOVE  ·  A / B PASS  ·  X SHOOT  ·  Y TURBO  ·  START RESUME", 16, Color("#D5E8F8"))
+	Logo.draw_centered(canvas, font, Rect2(ctl.position + Vector2(0, 56), Vector2(ctl.size.x, 26)), "ENTER OR START ON THE FINAL WHISTLE = INSTANT REMATCH", 16, Color("#F4FBFF"))
 
 func _draw_team_card(canvas: CanvasItem, font: Font, rect: Rect2, info: Dictionary, selected: bool, hot: bool) -> void:
 	var primary := Color(str(info["primary"]))

@@ -10,7 +10,7 @@ static func title(vp: Vector2) -> Dictionary:
 	var btn_w := 360.0
 	var btn_h := 108.0
 	var gap := 28.0
-	var bottom_margin := 72.0
+	var bottom_margin := 108.0
 	var play_y := vp.y - bottom_margin - btn_h
 	var total := btn_w * 2.0 + gap
 	var play_x := (vp.x - total) * 0.5
@@ -57,7 +57,7 @@ static func pause_menu(vp: Vector2) -> Dictionary:
 	var btn_h := 100.0
 	var gap := 14.0
 	var pw := minf(720.0, vp.x - 80.0)
-	var ph := 28.0 + 72.0 + 12.0 + btn_h * 4.0 + gap * 3.0 + 28.0
+	var ph := 28.0 + 72.0 + 12.0 + btn_h * 4.0 + gap * 3.0 + 28.0 + 92.0
 	var origin := Vector2((vp.x - pw) * 0.5, (vp.y - ph) * 0.5)
 	var bx := origin.x + 36.0
 	var bw := pw - 72.0
@@ -68,6 +68,7 @@ static func pause_menu(vp: Vector2) -> Dictionary:
 		"restart": Rect2(bx, by + (btn_h + gap), bw, btn_h),
 		"quit": Rect2(bx, by + (btn_h + gap) * 2.0, bw, btn_h),
 		"privacy": Rect2(bx, by + (btn_h + gap) * 3.0, bw, btn_h),
+		"controls": Rect2(bx, by + (btn_h + gap) * 4.0, bw, 84),
 	}
 
 
