@@ -103,7 +103,7 @@ func _walk(path: String, acc: Array[String]) -> void:
 			continue
 		acc.append(path.path_join(name))
 	for name in dir.get_directories():
-		if name.begins_with("."):
+		if name.begins_with(".") or name == "android":
 			continue
 		_walk(path.path_join(name), acc)
 
