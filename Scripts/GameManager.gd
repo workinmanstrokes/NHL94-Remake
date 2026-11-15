@@ -537,7 +537,7 @@ func _poll_keyboard() -> void:
 		keyboard_driving = false
 
 func _poll_shoot_key() -> void:
-	var down := Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_J) or Input.is_key_pressed(KEY_Z) or (gamepad != null and gamepad.is_shoot_held())
+	var down: bool = Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_J) or Input.is_key_pressed(KEY_Z) or (gamepad != null and gamepad.is_shoot_held())
 	if not btn_b_held:
 		if down and not shoot_key_down:
 			_on_button_b_pressed()
@@ -548,7 +548,7 @@ func _poll_shoot_key() -> void:
 func _poll_gamepad() -> void:
 	if not gamepad or joy_touch_id != -1:
 		return
-	var pad_move := gamepad.poll_move()
+	var pad_move: Vector2 = gamepad.poll_move()
 	if pad_move.length() > 0.05:
 		joy_vector = pad_move
 		joy_knob = joy_center + pad_move * (joy_radius * 0.72)

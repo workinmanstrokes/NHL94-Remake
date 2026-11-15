@@ -20,8 +20,8 @@ const BUTTON_PASS := JOY_BUTTON_A
 const BUTTON_PASS_ALT := JOY_BUTTON_B
 const BUTTON_SHOOT := JOY_BUTTON_X
 const BUTTON_TURBO_1 := JOY_BUTTON_Y
-const BUTTON_TURBO_2 := JOY_BUTTON_LB
-const BUTTON_TURBO_3 := JOY_BUTTON_RB
+const BUTTON_TURBO_2 := JOY_BUTTON_LEFT_SHOULDER
+const BUTTON_TURBO_3 := JOY_BUTTON_RIGHT_SHOULDER
 const BUTTON_PAUSE := JOY_BUTTON_START
 
 var connected_pads: Array = []
@@ -40,7 +40,7 @@ func refresh_pads() -> void:
 	for device in connected_pads:
 		if not profiles.has(device):
 			profiles[device] = {
-				"name": Input.get_joypad_name(device),
+				"name": Input.get_joy_name(device),
 				"deadzone": DEADZONE,
 				"max_rest_drift": 0.0,
 				"mapping_ok": false,
@@ -60,7 +60,7 @@ func first_pad_id() -> int:
 func pad_name(device: int) -> String:
 	if profiles.has(device):
 		return str(profiles[device]["name"])
-	return Input.get_joypad_name(device)
+	return Input.get_joy_name(device)
 
 func apply_deadzone(v: Vector2) -> Vector2:
 	var mag := v.length()
@@ -72,7 +72,7 @@ func poll_move(device: int = -1) -> Vector2:
 	var dev := _resolve_device(device)
 	if dev < 0:
 		return Vector2.ZERO
-	var stick := Vector2(Input.get_joypad_axis(dev, JOY_AXIS_LEFT_X), Input.get_joypad_axis(dev, JOY_AXIS_LEFT_Y))
+	var stick := Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
 	var dpad := Vector2.ZERO
 	if Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_LEFT):
 		dpad.x -= 1.0
