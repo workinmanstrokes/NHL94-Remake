@@ -4,9 +4,9 @@ var team_id: int = 0
 var role: String = "C"
 var player_name: String = "PLAYER"
 var jersey_num: String = "94"
-var primary_color: Color = Color("008b8b")
-var secondary_color: Color = Color("111622")
-var trim_color: Color = Color.WHITE
+var primary_color: Color = Color("5E6EF2")
+var secondary_color: Color = Color("141824")
+var trim_color: Color = Color("E5F7FF")
 
 var stat_spd: int = 4; var stat_sht: int = 4; var stat_acc: int = 4; var stat_chk: int = 4; var stat_pas: int = 4
 var is_human: bool = false
@@ -40,6 +40,8 @@ func setup_stats(data: Dictionary, t_id: int, p_col: Color, s_col: Color, tr_col
 
 func _physics_process(delta: float) -> void:
 	if not game_mgr: return
+	if game_mgr.paused:
+		return
 	if pickup_cooldown > 0.0: pickup_cooldown -= delta
 	if shoot_anim_timer > 0.0: shoot_anim_timer -= delta
 	if goalie_pose_timer > 0.0:
@@ -171,7 +173,9 @@ func _draw() -> void:
 	if is_human:
 		var ring_col = Color(1.0, 0.92, 0.15, 0.92) if game_mgr.puck.carrier == self else Color(0.15, 0.95, 1.0, 0.80)
 		draw_arc(Vector2(0, 10), 19.0, 0, TAU, 24, ring_col, 2.8)
-		draw_string(font, Vector2(-40, 28), "#%s %s" % [jersey_num, player_name], HORIZONTAL_ALIGNMENT_CENTER, 80, 11, Color(0.08, 0.1, 0.15, 0.9))
+		var nameplate := "#%s %s" % [jersey_num, player_name]
+		draw_rect(Rect2(-64, 16, 128, 16), Color(0.05, 0.07, 0.12, 0.78), true)
+		draw_string(font, Vector2(-64, 28), nameplate, HORIZONTAL_ALIGNMENT_CENTER, 128, 12, Color(0.95, 0.97, 1.0))
 		if is_charging_shot:
 			draw_rect(Rect2(-18, -33, 36, 6), Color(0.1, 0.1, 0.1, 0.85), true)
 			draw_rect(Rect2(-17, -32, 34.0 * shot_charge, 4), Color(1.0, 0.3, 0.1), true)

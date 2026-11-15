@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://nhl94mainrink"]
+[gd_scene load_steps=2 format=3 uid="uid://icelegendsrink"]
 [ext_resource type="Script" path="res://Scripts/GameManager.gd" id="1_game"]
 [node name="MainRink" type="Node2D"]
 script = ExtResource("1_game")

@@ -7,6 +7,7 @@ var one_timer_window: float = 0.0
 var is_shot_on_goal: bool = false
 var start_x_launch: float = 0.0
 var trail_points: Array = []
+var game_mgr: Node2D = null
 
 const ICE_FRICTION: float = 175.0
 const BOUNCE_RESTITUTION: float = 0.76
@@ -16,6 +17,8 @@ func _ready() -> void:
 	collision_mask = 1
 
 func _physics_process(delta: float) -> void:
+	if game_mgr and game_mgr.paused:
+		return
 	if one_timer_window > 0.0:
 		one_timer_window -= delta
 		if one_timer_window <= 0.0: pass_in_flight = false

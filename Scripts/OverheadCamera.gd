@@ -1,5 +1,7 @@
 extends Camera2D
 
+const Modes = preload("res://Scripts/MenuLayout.gd")
+
 var game_mgr: Node2D = null
 var shake_amount: float = 0.0
 
@@ -10,7 +12,10 @@ func add_shake(amount: float) -> void:
 	shake_amount = max(shake_amount, amount)
 
 func _process(delta: float) -> void:
-	if not game_mgr or not game_mgr.puck: return
+	if not game_mgr or game_mgr.paused or game_mgr.app_mode != Modes.MODE_MATCH:
+		return
+	if not game_mgr.puck or not is_instance_valid(game_mgr.puck):
+		return
 	var puck = game_mgr.puck
 	var human = game_mgr.active_human
 	var focus = puck.global_position
